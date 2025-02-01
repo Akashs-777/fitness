@@ -1,4 +1,7 @@
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:1023966579.
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:1529813167.
 import 'package:flutter/material.dart';
+import 'package:myapp/screens/chat_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -72,6 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>  ChatScreen(),
+                          ),
+                          (route) => false,
+                        );
+                        
+                        
                         // Process login
                       }
                     },
