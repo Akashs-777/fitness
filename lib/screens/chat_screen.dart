@@ -1,85 +1,63 @@
-import 'package:flutter/material.dart';
-import 'dart:math' as math;
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:1975390785.
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:764376108.
+// Suggested code may be subject to a license. Learn more: ~LicenseLog:1164116620.
 
+import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
+  const ChatScreen({Key? key}) : super(key: key);
+
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
   final List<ChatMessage> _messages = [
-    ChatMessage(
-      messageContent: "Hello, Will",
-      messageType: "receiver",
-    ),
-    ChatMessage(
-      messageContent: "How have you been?",
-      messageType: "receiver",
-    ),
-    ChatMessage(
-        messageContent: "Hey Kriss, I am doing fine dude. wbu?",
-        messageType: "sender"),
-    ChatMessage(
-        messageContent: "ehhhh, doing OK.", messageType: "receiver"),
-    ChatMessage(
-        messageContent: "Is there any thing wrong?", messageType: "sender"),
+    ChatMessage(text: "Hello!", sender: "user"),
+    ChatMessage(text: "Hi there!", sender: "sender"),
+    ChatMessage(text: "How are you?", sender: "user"),
+    ChatMessage(text: "I'm good, thanks!", sender: "sender"),
   ];
 
-  final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
 
   void _handleSubmitted(String text) {
-    _messageController.clear();
+    _textController.clear();
     setState(() {
-      _messages.add(ChatMessage(messageContent: text, messageType: "sender"));
+      _messages.insert(0, ChatMessage(text: text, sender: "user"));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Chat')),
       drawer: Drawer(
+        backgroundColor: Theme.of(context).primaryColor,
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-             DrawerHeader(
-              decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary
-              ),
+            DrawerHeader(
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
               child: Text(
-                'Navigation Drawer',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                'Options',
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: const Text('Profile'), onTap: () {}),
-            ListTile(
-              leading: Icon(Icons.food_bank),
-              title: const Text('Supplements'), onTap: () {}),
-            ListTile(
-              leading: Icon(Icons.fitness_center),
-              title: const Text('Exercise'), onTap: () {}),
+            ListTile(title: const Text('Mood Logging'), onTap: () {}),
+            ListTile(title: const Text('Journaling'), onTap: () {}),
+            ListTile(title: const Text('Log Out'), onTap: () {}),
           ],
         ),
       ),
-      appBar: AppBar(
-        title: const Text("Chat Screen"),
-      ),
       body: Column(
-        children: <Widget>[
+        children: [
           Expanded(
             child: ListView.builder(
               reverse: true,
-              padding: const EdgeInsets.all(10.0),
               itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final reversedIndex = _messages.length - 1 - index;
-                return ChatBubble(message: _messages[reversedIndex]);
-              },
+              itemBuilder:
+                  (context, index) => ChatBubble(message: _messages[index]),
             ),
           ),
           _buildTextComposer(),
@@ -92,105 +70,61 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Row(
-        children: <Widget>[
+        children: [
           Flexible(
             child: TextField(
-              controller: _messageController,
+              controller: _textController,
               onSubmitted: _handleSubmitted,
-              decoration:
-                  const InputDecoration.collapsed(hintText: "Send a message"),
+              decoration: const InputDecoration.collapsed(
+                hintText: 'Send a message',
+              ),
             ),
           ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 4.0),
             child: IconButton(
-                icon: const Icon(Icons.send),
-              onPressed: () => _handleSubmitted(_messageController.text),
-              hoverColor: Colors.blue[100], 
-              splashColor: Colors.blue[200],
-              
+              icon: const Icon(Icons.send),
+              onPressed: () => _handleSubmitted(_textController.text),
             ),
           ),
-          const Symbol(),
         ],
-      ),
-    );
-  }
-}
-class Symbol extends StatefulWidget {
-  const Symbol({Key? key}) : super(key: key);
-  @override
-  _SymbolState createState() => _SymbolState();
-}
-class _SymbolState extends State<Symbol> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  bool _isHovering = false;
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          if (_isHovering && _controller.status == AnimationStatus.dismissed) _controller.forward();
-          if (!_isHovering && _controller.status == AnimationStatus.completed) _controller.reverse();
-          return Transform.rotate(
-            angle: _controller.value * 2 * math.pi,
-            child: Icon(Icons.star, color: Color.lerp(Colors.grey, Colors.yellow, _controller.value)),
-            ),
-        },
       ),
     );
   }
 }
 
 class ChatMessage {
-  String messageContent;
-  String messageType;
-  ChatMessage({required this.messageContent, required this.messageType});
+  final String text;
+  final String sender;
+  ChatMessage({required this.text, required this.sender});
 }
 
 class ChatBubble extends StatelessWidget {
-
   final ChatMessage message;
-
   const ChatBubble({Key? key, required this.message}) : super(key: key);
 
   @override
-  void initState() {
-    
-  }
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: Container(
-      padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
-      child: Align(
-        alignment: (message.messageType == "receiver"
-            ? Alignment.topLeft
-            : Alignment.topRight),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: (message.messageType == "receiver"
-                ? Colors.grey.shade200
-                : Colors.blue[200]),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            message.messageContent,
-            style: const TextStyle(fontSize: 15),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+      child: Row(
+        mainAxisAlignment:
+            message.sender == "user"
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              color:
+                  message.sender == "user"
+                      ? Colors.blue[100]
+                      : Colors.grey[200],
+              borderRadius: BorderRadius.circular(10.0),
             ),
+            child: Text(message.text),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -3,10 +3,15 @@
 // Suggested code may be subject to a license. Learn more: ~LicenseLog:2881968932.
 // Suggested code may be subject to a license. Learn more: ~LicenseLog:4194993550.
 import 'package:flutter/material.dart';
+import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:myapp/screens/splash_screen.dart';
 
 import 'screens/signup_screen.dart';
 
+const apiKey = '--- Your Gemini Api Key ---';
+
 void main() {
+  Gemini.init(apiKey: apiKey);
   runApp(const MyApp());
 }
 
@@ -30,46 +35,40 @@ class MyApp extends StatelessWidget {
           700: Color(0xFF90EE90),
           800: Color(0xFF90EE90),
           900: Color(0xFF90EE90),
-      }),
+        }),
         primaryColor: const Color(0xFF90EE90), // Light Green
         hintColor: Colors.white,
         scaffoldBackgroundColor: Colors.white,
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(
             color: Colors.black,
-          fontWeight: FontWeight.bold,
-          fontSize: 32,
-        ),
-        headlineMedium: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 32,
+          ),
+          headlineMedium: TextStyle(
             color: Colors.black,
-          fontWeight: FontWeight.w600,
-          fontSize: 24,
+            fontWeight: FontWeight.w600,
+            fontSize: 24,
+          ),
+          bodyLarge: TextStyle(color: Colors.black, fontSize: 18),
+          bodyMedium: TextStyle(color: Colors.black87, fontSize: 16),
         ),
-        bodyLarge: TextStyle(
-            color: Colors.black,
-          fontSize: 18,
-        ),
-        bodyMedium: TextStyle(
-            color: Colors.black87,
-          fontSize: 16,
-        ),
-      ),
-      appBarTheme: const AppBarTheme(
+        appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF90EE90),
           foregroundColor: Colors.black,
-        titleTextStyle: TextStyle(
+          titleTextStyle: TextStyle(
             color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
 
         colorScheme: const ColorScheme.light(
           primary: Color(0xFF90EE90), // Light Green
           secondary: Colors.white,
+        ),
       ),
-    ),
-      home: const SignupScreen(),
+      home: SplashScreen(),
     );
   }
 }

@@ -1,12 +1,16 @@
 // Suggested code may be subject to a license. Learn more: ~LicenseLog:2082537530.
 // Suggested code may be subject to a license. Learn more: ~LicenseLog:4018988184.
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/screens/login_screen.dart';
 
+import '../services/api_service.dart';
 import 'Forgot_Password_screen.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   _SignupScreenState createState() => _SignupScreenState();
@@ -145,12 +149,39 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 24.0),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    // Process signup
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Signing Up...')),
-                    );
+                    setState(() {
+                            });
+
+                            var passwordBytes = utf8.encode(_passwordController.text);
+                            var passwordDigest = sha256.convert(passwordBytes);
+
+                            var response = await ApiService.post('signup', {
+                              'name': _nameController.text,
+                              'email': _emailController.text,
+                              'password': passwordDigest.toString(),
+                            });
+                            setState(() {
+
+                              if (response.statusCode >= 200 &&
+                                  response.statusCode < 300) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                  (Route<dynamic> route) => false,
+                                );
+                              } else {
+                                final responseData = jsonDecode(response);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(responseData["message"]),
+                                  ),
+                                );
+                              }
+                              
+                            });
                   }
                 },
                 child: const Text('Signup'),
