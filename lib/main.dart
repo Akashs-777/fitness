@@ -1,15 +1,14 @@
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:2937451319.
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:2525552142.
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:2881968932.
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:4194993550.
+
 import 'package:flutter/material.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
-import 'package:myapp/screens/splash_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const apiKey = '--- Your Gemini Api Key ---';
 
-void main() {
-  Gemini.init(apiKey: apiKey);
+import 'screens/splash_screen.dart';
+
+const apiKey = '--';
+
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -20,52 +19,45 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Your App Title',
-      theme: ThemeData(
-        primarySwatch: const MaterialColor(0xFF90EE90, {
-          50: Color(0xFF90EE90),
-          100: Color(0xFF90EE90),
-          200: Color(0xFF90EE90),
-          300: Color(0xFF90EE90),
-          400: Color(0xFF90EE90),
-          500: Color(0xFF90EE90),
-          600: Color(0xFF90EE90),
-          700: Color(0xFF90EE90),
-          800: Color(0xFF90EE90),
-          900: Color(0xFF90EE90),
-        }),
-        primaryColor: const Color(0xFF90EE90), // Light Green
-        hintColor: Colors.white,
-        scaffoldBackgroundColor: Colors.white,
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-          ),
-          headlineMedium: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 24,
-          ),
-          bodyLarge: TextStyle(color: Colors.black, fontSize: 18),
-          bodyMedium: TextStyle(color: Colors.black87, fontSize: 16),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF90EE90),
-          foregroundColor: Colors.black,
-          titleTextStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF90EE90), // Light Green
-          secondary: Colors.white,
-        ),
+      title: 'Flutter Demo',
+      theme: // Suggested code may be subject to a license. Learn more: ~LicenseLog:4051710695.
+      ThemeData(
+    colorScheme: ColorScheme.light(
+      primary: const Color(0xFFBBDEFB), // Light Blue
+      secondary: const Color(0xFFA5D6A7), // Green
+      surface: const Color(0xFFF0F0F0), // Light Gray
+      onPrimary: const Color(0xFF1976D2), // Dark Blue (text on light blue)
+      onSecondary: const Color(0xFF000000), //Black
+      onSurface: const Color(0xFF000000), //Black
+      onError: const Color(0xFFBBDEFB), // white
+      error: Colors.red, //red
+    ),
+    // You can customize other aspects of the theme here, such as:
+    textTheme: const TextTheme(
+      // Customize text styles here
+      bodyMedium: TextStyle(
+        color: Color(0xFF000000), // Example: Dark text color
       ),
+        bodyLarge: TextStyle(
+          color: Color(0xFF000000), // Example: Dark text color
+        ),
+      bodySmall: TextStyle(
+        color: Color(0xFF000000), // Example: Dark text color
+      ),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFFBBDEFB), // Example: Light blue app bar
+      foregroundColor: Color(0xFF000000), // Example: Black text in the app bar
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFBBDEFB),
+          foregroundColor: const Color(0xFF000000),
+        )
+    ),
+    useMaterial3: true,
+  ),
+
       home: SplashScreen(),
     );
   }
@@ -117,9 +109,9 @@ class _MyHomePageState extends State<MyHomePage> {
         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
         // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
+        // Here we take the value from the MyHomePage object that was created by.
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(widget.title, style: TextStyle(color: Color(0xFFFFECB3)),),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it

@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,12 +24,12 @@ class _SplashScreenState extends State<SplashScreen> {
       if (userId == null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => LogInScreen()),
         );
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ChatScreen()),
+          MaterialPageRoute(builder: (context) => ChatScreen(chatSessionId: '',)),
         );
       }
     });
@@ -37,7 +38,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Image.asset('assets/images/Logo.webp')),
+      body: Center(
+        child: Image.asset('assets/images/Logo.webp'),
+      ),
     );
   }
 }
