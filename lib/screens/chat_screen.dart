@@ -1,11 +1,10 @@
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:205925291.
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:2321873323.
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:2241137767.
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +24,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final apiKey = dotenv.env['GEMINI_API_KEY'];
   bool _isLoading = false;
+  bool _isAtBottom = true; // Tracks if user is at the bottom
+  Timer? _scrollDebounceTimer;
 
   late final GenerativeModel model;
   late final String userId;
@@ -35,6 +36,20 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(() {
+      if (_scrollDebounceTimer?.isActive ?? false)
+        _scrollDebounceTimer!.cancel();
+      _scrollDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+        final atBottom =
+            _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 10;
+        if (atBottom != _isAtBottom) {
+          setState(() {
+            _isAtBottom = atBottom;
+          });
+        }
+      });
+    });
     if (apiKey != null) {
       model = GenerativeModel(
         model: 'gemini-2.0-flash-lite',
@@ -51,21 +66,17 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     } else {
-      // Handle the case where the API key is null, e.g., show an error message.
       log('GEMINI_API_KEY is not set in .env');
     }
-
     _checkLogin();
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPersistentFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   _checkLogin() async {
@@ -83,7 +94,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   final List<ChatMessage> _messages = [];
-
   final TextEditingController _textController = TextEditingController();
 
   Future<void> _loadChatHistory() async {
@@ -94,22 +104,19 @@ class _ChatScreenState extends State<ChatScreen> {
     if (apiResponse.statusCode >= 200 && apiResponse.statusCode < 300) {
       final responseData = jsonDecode(apiResponse.body);
       for (var message in responseData) {
-        print('Message: ${message['message']}');
-        print('Role: ${message['role']}');
-        print('ChatName: ${message['chatName']}');
-        if (message['message'] == null) {
-          continue;
-        }
+        if (message['message'] == null) continue;
         setState(() {
           _messages.add(
             ChatMessage(text: message['message'], sender: message['role']),
           );
         });
       }
-      _scrollToBottom();
-      print(responseData[0]);
+      if (_isAtBottom) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      }
       final chat_Name = responseData.last['chatName'];
-      print(chat_Name);
       setState(() {
         chatName = chat_Name;
         _isLoading = false;
@@ -132,10 +139,17 @@ class _ChatScreenState extends State<ChatScreen> {
     for (var message in _messages) {
       chatHistory.add(Content(message.sender, [TextPart(message.text)]));
     }
+
     setState(() {
       _messages.add(ChatMessage(text: text, sender: "user"));
-      _scrollToBottom();
     });
+    if (_isAtBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+    await Future.delayed(Duration(seconds: 1));
+
     if (_messages.length == 1) {
       chatName = text;
     }
@@ -156,7 +170,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
       final prompt =
-          'Summarize this conversation between user and AI to give it a chat name to recognise later on.  Focus on user\'s feelings and regarding what. Conversation : $messageHistory';
+          'Summarize this conversation between user and AI to give it a chat name to recognise later on.  Focus on user\'s feelings and regarding what. Just give a name and do not add Chat Name infront. Conversation : $messageHistory';
       final content = [Content.text(prompt)];
       final response = await chatNameModel.generateContent(content);
       setState(() {
@@ -166,7 +180,6 @@ class _ChatScreenState extends State<ChatScreen> {
       var apiResponse = await ApiService.put('chat/${widget.chatSessionId}', {
         'chatName': chatName,
       });
-
       if (apiResponse.statusCode >= 200 && apiResponse.statusCode < 300) {
         setState(() {
           _isLoading = false;
@@ -181,23 +194,29 @@ class _ChatScreenState extends State<ChatScreen> {
         ).showSnackBar(SnackBar(content: Text(responseData["message"])));
       }
     }
+
     final chat = model.startChat(
       history:
           _messages.map((m) => Content(m.sender, [TextPart(m.text)])).toList(),
     );
     final content = Content.text(text);
     final response = await chat.sendMessage(content);
+
     setState(() {
       if (response.text != null) {
         _messages.add(ChatMessage(text: response.text!, sender: "model"));
       }
-      _scrollToBottom();
     });
+    if (_isAtBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+    await Future.delayed(Duration(seconds: 1));
 
     setState(() {
       _isLoading = true;
     });
-
     var apiResponse = await ApiService.post('chat', {
       'chatSessionId': widget.chatSessionId,
       'chatName': chatName,
@@ -205,7 +224,6 @@ class _ChatScreenState extends State<ChatScreen> {
       'message': text,
       'role': 'user',
     });
-
     if (apiResponse.statusCode >= 200 && apiResponse.statusCode < 300) {
       setState(() {
         _isLoading = false;
@@ -221,18 +239,18 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (response.text != null) {
-      var apiResponse = await ApiService.post('chat', {
+      apiResponse = await ApiService.post('chat', {
         'chatSessionId': widget.chatSessionId,
         'chatName': chatName,
         'userId': userId,
         'message': response.text,
         'role': 'model',
       });
-
       if (apiResponse.statusCode >= 200 && apiResponse.statusCode < 300) {
         setState(() {
           _isLoading = false;
         });
+        
       } else {
         setState(() {
           _isLoading = false;
@@ -243,6 +261,12 @@ class _ChatScreenState extends State<ChatScreen> {
         ).showSnackBar(SnackBar(content: Text(responseData["message"])));
       }
     }
+    if (_isAtBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+    await Future.delayed(Duration(seconds: 1));
   }
 
   @override
@@ -260,11 +284,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               );
             },
-            icon: Icon(Icons.history),
+            icon: const Icon(Icons.history),
           ),
         ],
       ),
-      drawer: NavDrawer(selectedIndex: 0),
+      drawer: const NavDrawer(selectedIndex: 0),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -273,12 +297,29 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        itemCount: _messages.length,
-                        itemBuilder:
-                            (context, index) =>
-                                ChatBubble(message: _messages[index]),
+                      child: Stack(
+                        children: [
+                          ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _messages.length,
+                            itemBuilder:
+                                (context, index) =>
+                                    ChatBubble(message: _messages[index]),
+                          ),
+                          if (!_isAtBottom)
+                            Positioned(
+                              bottom: 10,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: FloatingActionButton(
+                                  onPressed: _scrollToBottom,
+                                  child: const Icon(Icons.arrow_downward),
+                                  mini: true,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     _buildTextComposer(),
@@ -321,6 +362,14 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _scrollDebounceTimer?.cancel();
+    _textController.dispose();
+    super.dispose();
+  }
 }
 
 class ChatMessage {
@@ -333,29 +382,59 @@ class ChatBubble extends StatelessWidget {
   final ChatMessage message;
   const ChatBubble({Key? key, required this.message}) : super(key: key);
 
+  void _copyToClipboard(BuildContext context, String text) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Copied to clipboard")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to copy: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isUser = message.sender == "user";
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       child: Row(
-        mainAxisAlignment:
-            message.sender == "user"
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.7,
-            ),
-            padding: const EdgeInsets.all(10.0),
-            decoration: BoxDecoration(
-              color:
-                  message.sender == "user"
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                ),
+                padding: const EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                  color: isUser
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.secondary,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Text(message.text),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: SelectableText(
+                  message.text,
+                ),
+              ),
+              ),
+               Padding(
+                 padding: const EdgeInsets.only(top: 10.0),
+                 child: IconButton(
+                  icon: const Icon(Icons.copy, size: 16),
+                  color: Theme.of(context).colorScheme.primary,
+                onPressed: () => _copyToClipboard(context, message.text),
+                tooltip: "Copy",
+                                 ),
+              ),
+            ],
           ),
         ],
       ),
